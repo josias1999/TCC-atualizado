@@ -1,0 +1,328 @@
+<!-- dashboard.html versão 0.2 Pronto-->
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Exames</title>
+    <link rel="stylesheet" href="tcc.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+    
+    
+    
+</head>
+<body>
+    <div class="login" id="login-section">
+        <div class="imagem-login">
+            <img src="/imagens/login1.jpg" alt="" />
+          </div>
+          
+        <h2>Login</h2>
+        <input type="text" id="username" placeholder="Usuário" />
+        <input type="password" id="password" placeholder="Senha" />
+        <button onclick="login()">Entrar</button>
+        
+        <p id="login-erro" >Usuário ou senha incorretos. Tente novamente.</p>
+      </div>
+    
+      <div class="dashboard hidden" id="dashboard">
+        <h2>Cadastro de Pacientes</h2>
+        <input type="text" id="nome" placeholder="Nome do Paciente" />
+        <input type="text" id="telefone" placeholder="Telefone (opcional)" />
+        <input type="text" id="cpf" placeholder="CPF (somente números)" />
+        <input type="text" id="sus" placeholder="Cartão do SUS (opcional)" />
+        <input type="date" id="data-coleta" placeholder="Data da Coleta" />
+        <input type ="text" id="observacoes" placeholder="Observações (opcional)"/>
+        <!--tabela-->
+      <div id="lista-pacientes">
+        <h3>Pacientes Cadastrados</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>CPF</th>
+              <th>Data da Coleta</th>
+              <th>Exames</th>
+            </tr>
+          </thead>
+          <tbody id="lista-nomes">
+            <!-- Pacientes aparecerão aqui -->
+          </tbody>
+        </table>
+      </div>
+        
+        <fieldset>
+          <legend>Exames Coletados</legend>
+          <label><input type="checkbox" name="exames" value="Hemograma"> Hemograma</label><br>
+          <label><input type="checkbox" name="exames" value="Glicemia de jejum"> Glicemia de jejum</label><br>
+          <label><input type="checkbox" name="exames" value="Triglicerídeo"> Triglicerídeo</label><br>
+          <label><input type="checkbox" name="exames" value="Ureia"> Ureia</label><br>
+          <label><input type="checkbox" name="exames" value="Creatinina"> Creatinina</label><br>
+          <label><input type="checkbox" name="exames" value="TSH e T4"> TSH e T4</label><br>
+          <label><input type="checkbox" name="exames" value="TGO e TGP"> TGO e TGP</label><br>
+          <label><input type="checkbox" name="exames" value="Ácido úrico"> Ácido úrico</label>
+        </fieldset>
+        <!-- <button onclick="gerarFicha()">Gerar Ficha</button> -->
+        <!-- <button id="imprimir-etiquetas" class="hidden" onclick="imprimirEtiquetas()">Imprimir Etiquetas</button> -->
+        <div >
+            <button onclick="gerarFicha()">Gerar Ficha</button>
+            <button id="imprimir-etiquetas" class="hidden" onclick="imprimirEtiquetas()">Imprimir Etiquetas</button>
+          </div>
+          
+    
+        <div id="user-management" class="hidden">
+          <h3>Cadastrar Novo Usuário</h3>
+          <input type="text" id="novo-usuario" placeholder="Novo usuário" />
+          <input type="password" id="nova-senha" placeholder="Senha" />
+          <select id="tipo-usuario">
+            <option value="enfermagem">Enfermagem</option>
+            <option value="laboratorio">Laboratório</option>
+          </select>
+          <button onclick="cadastrarUsuario()">Cadastrar Usuário</button>
+        </div>
+    
+        <div id="ficha-container"></div>
+      </div>
+      
+</div>
+      <script>
+        $(document).ready(function() {
+          $('#telefone').mask('(00) 00000-0000');
+          $('#cpf').mask('000.000.000-00');
+          $('#sus').mask('000 0000 0000 000');
+        });
+    // Senha login
+        const users = {
+          "enfermagem": "1234",
+          "laboratorio": "abcd"
+        };
+    
+        let usuarioLogado = "";
+    
+        function login() {
+          const user = document.getElementById('username').value.trim();
+          const pass = document.getElementById('password').value.trim();
+          const erro = document.getElementById('login-erro');
+    
+          if (!user || !pass) {
+            alert("Por favor, preencha todos os campos de login.");
+            return;
+          }
+    
+          if (users[user] && users[user] === pass) {
+            usuarioLogado = user;
+            document.getElementById('login-section').classList.add('hidden');
+            document.getElementById('dashboard').classList.remove('hidden');
+            erro.style.display = 'none';
+            if (user in users) {
+              document.getElementById('user-management').classList.remove('hidden');
+            }
+            alert("Login realizado com sucesso");
+          } else {
+            erro.style.display = 'block';
+          }
+        }
+    
+        function cadastrarUsuario() {
+          const novoUsuario = document.getElementById('novo-usuario').value.trim();
+          const novaSenha = document.getElementById('nova-senha').value.trim();
+          const tipoUsuario = document.getElementById('tipo-usuario').value;
+    
+          if (!novoUsuario || !novaSenha) {
+            alert("Preencha todos os campos para cadastrar um novo usuário.");
+            return;
+          }
+    
+          if (!(usuarioLogado in users)) {
+            alert("Apenas usuários autorizados podem cadastrar novos usuários.");
+            return;
+          }
+    
+          if (users[novoUsuario]) {
+            alert("Usuário já existe.");
+            return;
+          }
+    
+          users[novoUsuario] = novaSenha;
+          alert(`Usuário '${novoUsuario}' cadastrado com sucesso como '${tipoUsuario}'`);
+    
+          document.getElementById('novo-usuario').value = "";
+          document.getElementById('nova-senha').value = "";
+        }
+    
+        function validarCPF(cpf) {
+          cpf = cpf.replace(/\D/g, '');
+          if (cpf.length !== 11 || /^([0-9])\1+$/.test(cpf)) return false;
+          let soma = 0;
+          for (let i = 0; i < 9; i++) soma += parseInt(cpf.charAt(i)) * (10 - i);
+          let resto = (soma * 10) % 11;
+          if (resto === 10 || resto === 11) resto = 0;
+          if (resto !== parseInt(cpf.charAt(9))) return false;
+          soma = 0;
+          for (let i = 0; i < 10; i++) soma += parseInt(cpf.charAt(i)) * (11 - i);
+          resto = (soma * 10) % 11;
+          if (resto === 10 || resto === 11) resto = 0;
+          return resto === parseInt(cpf.charAt(10));
+        }
+    
+        function gerarFicha() {
+            
+          const nome = document.getElementById('nome').value;
+          const telefone = document.getElementById('telefone').value.replace(/\D/g, '');
+          const cpf = document.getElementById('cpf').value.replace(/\D/g, '');
+          const sus = document.getElementById('sus').value.replace(/\D/g, '');
+          const data = document.getElementById('data-coleta').value;
+          const observacoes = document.getElementById('observacoes').value;
+          const examesSelecionados = Array.from(document.querySelectorAll('input[name="exames"]:checked')).map(e => e.value).join(', ');
+        
+          if (telefone && !telefone.match(/^\d{10,11}$/)) {
+            alert("Telefone inválido");
+            return;
+          }
+    
+          if (!validarCPF(cpf)) {
+            alert("CPF inválido");
+            return;
+          }
+    
+          if (sus && !sus.match(/^\d{15}$/)) {
+            alert("Cartão do SUS inválido. Deve conter 15 dígitos se informado.");
+            return;
+          }
+        
+          const container = document.getElementById('ficha-container');
+          container.style.display = "block"; // garantir que fique visível
+          const ficha = document.createElement('div');
+          ficha.classList.add('ficha');
+          ficha.innerHTML = `
+            <h3>${nome}</h3>
+            ${telefone ? `<p>Telefone: ${document.getElementById('telefone').value}</p>` : ''}
+            <p>CPF: ${document.getElementById('cpf').value}</p>
+            ${sus ? `<p>Cartão SUS: ${document.getElementById('sus').value}</p>` : ''}
+            <p>Data de Coleta: ${data}</p>
+            <p>Observações: ${observacoes}</p>
+            
+            <p>Exames: ${examesSelecionados}</p>
+            <p>Status: <select onchange="atualizarStatus(this)">
+              <option value="pendente">Pendente</option>
+              <option value="pronto">Pronto</option>
+              <option value="recoleta">Recoleta</option>
+            </select></p>
+            <div class="qr-code"></div>
+            <div id="imgQrcode"><img src="imagens/qrcod1.png" alt=""></div>
+            <button onclick="window.print()">Imprimir</button>
+             `;
+             <!--tabela-->
+             const tabela = document.getElementById('lista-nomes');
+const linha = document.createElement('tr');
+
+linha.innerHTML = `
+  <td>${nome}</td>
+  <td>${document.getElementById('cpf').value}</td>
+  <td>${data}</td>
+  <td>${examesSelecionados}</td>
+`;
+
+tabela.appendChild(linha);
+        
+        container.appendChild(ficha);
+        document.getElementById('imprimir-etiquetas').classList.remove('hidden');
+        const qrDiv = ficha.querySelector('.qr-code');
+        const canvas = document.createElement('canvas');
+        qrDiv.appendChild(canvas);
+        QRCode.toCanvas(qrDiv, `${nome} - ${examesSelecionados}`, function (error) {
+            if (error) console.error(error);
+          });
+          // Mostrar botão de imprimir etiquetas
+        //   document.getElementById('imprimir-etiquetas').classList.remove('hidden');
+        
+        // 
+    }
+    function atualizarStatus(select) {
+  const status = select.value;
+  const ficha = select.closest('.ficha');
+  const telefoneText = ficha.querySelector('p:nth-child(2)');
+  const telefone = telefoneText ? telefoneText.textContent.split(': ')[1].replace(/\D/g, '') : '';
+
+  if (telefone && telefone.match(/^\d{10,11}$/)) {
+    $.post("enviar_sms.php", {
+      numero: telefone,
+      mensagem: `Seu exame está ${status}.`
+    }, function (resposta) {
+      alert(resposta);
+    }).fail(function () {
+      alert("Erro ao tentar enviar SMS.");
+    });
+  } else {
+    alert("Número de telefone inválido para envio de SMS.");
+  }
+}
+    function imprimirEtiquetas(){
+        const fichas = document.querySelectorAll('.ficha');
+        if (fichas.length === 0) {
+        alert("Nenhuma ficha disponível para gerar etiquetas.");
+        return;
+      }
+    
+      const numerosUsados = new Set();
+      const gerarNumeroUnico = () => {
+        let numero;
+        do {
+          numero = Math.floor(100000 + Math.random() * 900000);
+        } while (numerosUsados.has(numero));
+        numerosUsados.add(numero);
+        return numero;
+      };
+      let janelaImpressao = window.open('', '_blank');
+      janelaImpressao.document.write
+    
+      
+
+      fichas.forEach((ficha, index) => {
+        const nome = ficha.querySelector('h3')?.innerText || 'Sem nome';
+        const exames = ficha.querySelector('p:nth-of-type(4)')?.innerText || '';
+        const numeroEtiqueta = gerarNumeroUnico();
+
+        janelaImpressao.document.write(`
+          <div class="etiqueta">
+            <strong>Nome: ${nome}</strong><br>
+            Nº da Etiqueta: <strong>${numeroEtiqueta}</strong><br>
+            ${exames}<br>
+            <div id="qrcode-${index}" class="qr-code"></div>
+          </div>
+        `);
+      });
+
+      janelaImpressao.document.write(`
+        
+          const etiquetas = document.querySelectorAll('.etiqueta');
+          etiquetas.forEach((etiqueta, i) => {
+            const nome = etiqueta.querySelector('strong')?.innerText || '';
+            const numero = etiqueta.innerHTML.match(/N\u00ba da Etiqueta: <strong>(\\d+)<\\/strong>/)?.[1] || '';
+            const exames = etiqueta.innerHTML.match(/<br>(.*?)<div/)?.[1] || '';
+            const qrDiv = etiqueta.querySelector('.qr-code');
+            const textoQR = nome + ' - Etiqueta: ' + numero + ' - ' + exames;
+            QRCode.toCanvas(qrDiv, textoQR, function (error) {
+              if (error) console.error(error);
+            });
+          });
+          window.onload = () => {
+            setTimeout(() => window.print(), 500);
+          };
+      
+        
+        
+      `);
+
+      janelaImpressao.document.close();
+    }
+
+
+    
+  
+      </script>
+</body>
+</html>
